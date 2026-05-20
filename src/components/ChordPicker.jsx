@@ -73,7 +73,7 @@ export default function ChordPicker({ onContinue }) {
           className="text-2xl font-light italic text-white drop-shadow-[0_1px_12px_rgba(80,100,160,0.5)]"
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          Synth Bloom
+          Synth Wave
         </h1>
         <p className="mt-0.5 text-xs text-white/70 drop-shadow-sm">
           Choose up to {MAX_CHORDS} chords · major · minor · M7 · m7 · 7 · aug · dim
