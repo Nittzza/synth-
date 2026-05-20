@@ -22,6 +22,7 @@ const STYLE_BY_GESTURE = {
   2: 'fluid',
   3: 'cosmic',
   palm: 'retro',
+  thumbs_up: 'star',
 }
 
 export const BURST_DURATION_MS = 1100
@@ -58,7 +59,14 @@ export function createAestheticBurst({
   const style = STYLE_BY_GESTURE[gesture] ?? 'cosmic'
   const colors = paletteForChord(activeChord)
   const scale = (impact ? 1.35 : 1) * (1 + voiceLevel * 0.25)
-  const gestureBoost = typeof gesture === 'number' ? 0.85 + gesture * 0.12 : 1
+  const gestureBoost =
+    gesture === 'palm'
+      ? 1.15
+      : gesture === 'thumbs_up'
+        ? 1.1
+        : typeof gesture === 'number'
+          ? 0.85 + gesture * 0.12
+          : 1
 
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,

@@ -1,15 +1,14 @@
 import { useEffect, useRef } from 'react'
-import { detectGesture } from '../utils/gestures'
+import { analyzeHand, classifyGesture } from '../utils/gestures'
 import { locateHandsFile } from '../utils/mediapipe'
 import { loadHands } from '../utils/loadMediaPipe'
 
 const DETECT_W = 480
 const DETECT_H = 270
 
-const FRAMES_TO_COMMIT = 2
-/** Longer clear avoids a null gesture between chord switches (which caused audible breaks) */
-const FRAMES_TO_CLEAR = 8
-const FRAMES_NO_HAND = 3
+const GESTURE_STABLE_MS = 120
+const GESTURE_CLEAR_MS = 80
+const FRAMES_NO_HAND = 2
 
 function handBounds(landmarks) {
   let minX = 1
@@ -31,22 +30,29 @@ function isPlausibleHand(landmarks) {
   return w > 0.04 && h > 0.04
 }
 
+function handednessFromResults(results) {
+  const cat = results.multiHandedness?.[0]
+  if (!cat) return 'Unknown'
+  return cat.label ?? cat.categoryName ?? 'Unknown'
+}
+
 export default function VisionTracker({
   video,
   enabled = true,
   onGesture,
   onHandVisible,
   onLandmarks,
+  onGestureAnalysis,
   onStatus,
 }) {
   const committedRef = useRef(null)
   const candidateRef = useRef(null)
-  const candidateCountRef = useRef(0)
+  const candidateSinceRef = useRef(0)
   const lastHandRef = useRef(false)
   const noHandCountRef = useRef(0)
   const callbacksRef = useRef({})
 
-  callbacksRef.current = { onGesture, onHandVisible, onLandmarks, onStatus }
+  callbacksRef.current = { onGesture, onHandVisible, onLandmarks, onGestureAnalysis, onStatus }
 
   useEffect(() => {
     if (!video || !enabled) return undefined
@@ -68,27 +74,28 @@ export default function VisionTracker({
     }
 
     const resetStability = () => {
-      candidateRef.current = null
-      candidateCountRef.current = 0
+      candidateRef.current = undefined
+      candidateSinceRef.current = 0
     }
 
-    const processRaw = (raw) => {
-      if (raw === candidateRef.current) {
-        candidateCountRef.current += 1
-      } else {
-        candidateRef.current = raw
-        candidateCountRef.current = 1
+    const processRaw = (rawGesture) => {
+      const now = performance.now()
+      const prev = candidateRef.current
+
+      if (rawGesture !== prev) {
+        candidateRef.current = rawGesture
+        candidateSinceRef.current = now
       }
 
-      const count = candidateCountRef.current
+      const elapsed = now - candidateSinceRef.current
       const stable = candidateRef.current
 
-      if (stable === null) {
-        if (count >= FRAMES_TO_CLEAR) commit(null)
+      if (stable === null || stable === undefined) {
+        if (elapsed >= GESTURE_CLEAR_MS) commit(null)
         return
       }
 
-      if (count >= FRAMES_TO_COMMIT) commit(stable)
+      if (elapsed >= GESTURE_STABLE_MS) commit(stable)
     }
 
     const setHandVisible = (visible) => {
@@ -99,6 +106,7 @@ export default function VisionTracker({
         resetStability()
         commit(null)
         callbacksRef.current.onLandmarks?.(null)
+        callbacksRef.current.onGestureAnalysis?.(null)
       }
     }
 
@@ -129,6 +137,7 @@ export default function VisionTracker({
             if (noHandCountRef.current >= FRAMES_NO_HAND) {
               setHandVisible(false)
               callbacksRef.current.onLandmarks?.(null)
+              callbacksRef.current.onGestureAnalysis?.(null)
             }
             return
           }
@@ -137,7 +146,10 @@ export default function VisionTracker({
           setHandVisible(true)
           callbacksRef.current.onLandmarks?.(rawHand)
 
-          processRaw(detectGesture(rawHand))
+          const handedness = handednessFromResults(results)
+          callbacksRef.current.onGestureAnalysis?.(analyzeHand(rawHand, handedness))
+
+          processRaw(classifyGesture(rawHand))
         })
 
         await hands.initialize()

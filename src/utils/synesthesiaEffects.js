@@ -30,6 +30,7 @@ export function burstCountForGesture(gesture) {
   if (gesture === 2) return 11
   if (gesture === 3) return 14
   if (gesture === 'palm') return 18
+  if (gesture === 'thumbs_up') return 14
   return 10
 }
 
@@ -46,7 +47,14 @@ export function randomBurstPoint(faceZone) {
 }
 
 export function createPop(origin, gesture, voiceLevel = 0) {
-  const gestureBoost = gesture === 'palm' ? 1.4 : typeof gesture === 'number' ? 0.9 + gesture * 0.15 : 1
+  const gestureBoost =
+    gesture === 'palm'
+      ? 1.4
+      : gesture === 'thumbs_up'
+        ? 1.2
+        : typeof gesture === 'number'
+          ? 0.9 + gesture * 0.12
+          : 1
   return {
     id: `${Date.now()}-${Math.random()}`,
     type: pickType(),

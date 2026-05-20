@@ -12,17 +12,13 @@ export default function GuideOverlay({ handVisible, gesture, activeChord, gestur
           <StatusPill
             ok
             label={
-              gesture === 'fist'
-                ? 'fist (stop)'
-                : gesture === 'palm'
-                  ? 'palm'
-                  : `${gesture} finger`
+              GESTURE_SLOTS.find((s) => s.gesture === gesture)?.label ?? String(gesture)
             }
           />
         )}
       </div>
 
-      <div className="absolute bottom-28 right-6 max-w-[220px] rounded-2xl border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-md">
+      <div className="absolute bottom-28 right-6 max-w-[min(280px,calc(100vw-3rem))] rounded-2xl border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-md">
         <p className="mb-2 text-center text-[10px] font-light uppercase tracking-[0.2em] text-white/50">
           Your chord map
         </p>

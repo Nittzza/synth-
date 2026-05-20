@@ -2,11 +2,9 @@ import { useEffect, useRef } from 'react'
 import { drawHandOverlay } from '../utils/drawHandOverlay'
 
 /**
- * Live hand skeleton overlay — magenta box, white bones, red joint dots.
- * Landmarks come from MediaPipe selfieMode (already aligned with mirrored video).
- * Do not CSS-mirror this canvas — that would flip tracking to the wrong side.
+ * Live hand skeleton + colored fingertip dots (extended = bright, curled = dim).
  */
-export default function HandTrackingOverlay({ video, landmarks, gesture }) {
+export default function HandTrackingOverlay({ video, landmarks, gesture, fingerStates }) {
   const canvasRef = useRef(null)
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 })
 
@@ -53,9 +51,9 @@ export default function HandTrackingOverlay({ video, landmarks, gesture }) {
     if (!landmarks?.length || w < 1) return
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    const active = gesture != null && gesture !== 'fist'
-    drawHandOverlay(ctx, landmarks, w, h, { active })
-  }, [landmarks, gesture])
+    const active = gesture != null
+    drawHandOverlay(ctx, landmarks, w, h, { active, fingerStates })
+  }, [landmarks, gesture, fingerStates])
 
   return (
     <canvas

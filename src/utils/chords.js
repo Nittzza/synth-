@@ -1,19 +1,16 @@
 import { QUALITY_TO_FLOWER } from './flowers'
 
-/** Up to 4 gestures — same order as omnichord performance mapping */
+/** Five chords */
 export const GESTURE_SLOTS = [
-  { gesture: 1, label: '1 finger', emoji: '☝️' },
-  { gesture: 2, label: '2 fingers', emoji: '✌️' },
-  { gesture: 3, label: '3 fingers', emoji: '🤟' },
-  { gesture: 'palm', label: 'open palm', emoji: '🖐️' },
+  { gesture: 1, label: 'One finger', emoji: '☝️', hint: 'Index only' },
+  { gesture: 2, label: 'Two fingers', emoji: '✌️', hint: 'Index + middle' },
+  { gesture: 3, label: 'Rock', emoji: '🤟', hint: 'Index + pinky · middle & ring down' },
+  { gesture: 'palm', label: 'Open palm', emoji: '🖐️', hint: 'All four fingers spread open' },
+  { gesture: 'thumbs_up', label: 'Thumbs up', emoji: '👍', hint: 'Thumb up · other fingers closed' },
 ]
 
-export const MAX_CHORDS = 4
+export const MAX_CHORDS = 5
 
-/**
- * Map selected chords (in order) → hand gestures.
- * @param {import('./chordTheory').createChord extends Function ? ReturnType<typeof createChord>[] : object[]} selectedChords
- */
 export function buildGestureMap(selectedChords) {
   const map = {}
   const byGesture = {}
@@ -29,7 +26,7 @@ export function buildGestureMap(selectedChords) {
 }
 
 export function getChordFromGesture(gestureMap, gesture) {
-  if (!gesture || !gestureMap || gesture === 'fist') return null
+  if (!gesture || !gestureMap) return null
   return gestureMap[gesture] ?? null
 }
 

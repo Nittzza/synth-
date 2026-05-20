@@ -15,11 +15,11 @@ export default function GestureAssignment({ selectedChords, synthLabel, onBegin,
           Your gestures
         </h1>
         <p className="mt-1 text-sm text-white/45">
-          Sound: <span className="text-white/70">{synthLabel ?? 'Dream Pad'}</span> · ☝️1 · ✌️2 · 🤟3 · 🖐️ palm · ✊ stop
+          Sound: <span className="text-white/70">{synthLabel ?? 'Dream Pad'}</span> · ☝️ · ✌️ · 🤟 · 🖐️ · 👍
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col justify-center gap-4 px-6 py-8">
+      <div className="flex min-h-0 flex-1 flex-col justify-start gap-3 overflow-y-auto px-6 py-6">
         {selectedChords.map((chord, i) => {
           const slot = GESTURE_SLOTS[i]
           return (
@@ -30,6 +30,9 @@ export default function GestureAssignment({ selectedChords, synthLabel, onBegin,
               <span className="text-3xl">{slot.emoji}</span>
               <div className="flex-1">
                 <p className="text-xs uppercase tracking-widest text-white/40">{slot.label}</p>
+                {slot.hint && (
+                  <p className="text-[10px] leading-snug text-white/35">{slot.hint}</p>
+                )}
                 <p
                   className="text-2xl font-light"
                   style={{ fontFamily: 'var(--font-display)', color: KEY_COLORS[chord.root] }}

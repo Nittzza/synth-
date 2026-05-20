@@ -11,7 +11,6 @@ import ChordPicker from './components/ChordPicker'
 import SoundPicker from './components/SoundPicker'
 import GestureAssignment from './components/GestureAssignment'
 import { buildGestureMap, getChordFromGesture } from './utils/chords'
-import { isStopGesture } from './utils/gestures'
 import { useSmoothValue } from './hooks/useSmoothValue'
 import { useVoiceLevel } from './hooks/useVoiceLevel'
 
@@ -26,20 +25,19 @@ export default function App() {
   const [gesture, setGesture] = useState(null)
   const [handVisible, setHandVisible] = useState(false)
   const [handLandmarks, setHandLandmarks] = useState(null)
+  const [gestureAnalysis, setGestureAnalysis] = useState(null)
   const [trackingStatus, setTrackingStatus] = useState('idle')
   const [audioReady, setAudioReady] = useState(false)
 
   const performing = phase === 'perform'
 
-  const stopAll = handVisible && isStopGesture(gesture)
-
   const activeChord = useMemo(() => {
-    if (!handVisible || !gesture || stopAll) return null
+    if (!handVisible || !gesture) return null
     return getChordFromGesture(gestureMap, gesture)
-  }, [gestureMap, gesture, handVisible, stopAll])
+  }, [gestureMap, gesture, handVisible])
 
   const voiceRaw = useVoiceLevel(performing && !!activeChord)
-  const voiceLevel = useSmoothValue(voiceRaw, 0.1)
+  const voiceLevel = useSmoothValue(voiceRaw, 0.05)
 
   const handleVideoReady = useCallback((el) => {
     setVideo(el)
@@ -119,19 +117,21 @@ export default function App() {
             video={video}
             landmarks={handLandmarks}
             gesture={gesture}
+            fingerStates={gestureAnalysis?.fingers}
           />
           <VisionTracker
             video={video}
             onGesture={handleGesture}
             onHandVisible={handleHandVisible}
             onLandmarks={setHandLandmarks}
+            onGestureAnalysis={setGestureAnalysis}
             onStatus={handleStatus}
           />
           {audioReady && (
             <AudioEngine
               activeChord={activeChord}
               handVisible={handVisible}
-              stopAll={stopAll}
+              stopAll={false}
               intensity={voiceLevel}
             />
           )}
@@ -173,9 +173,8 @@ export default function App() {
         </p>
         <p className="mt-3 text-sm text-white/45">
           {!handVisible && 'Raise your hand in front of the camera'}
-          {handVisible && !gesture && 'Hold ☝️ ✌️ 🤟 or 🖐️ steady for a moment'}
-          {stopAll && '✊ Stopped — show a chord gesture to play again'}
-          {handVisible && gesture && !stopAll && !activeChord && 'Gesture not in your chord map'}
+          {handVisible && !gesture && 'Hold ☝️ · ✌️ · 🤟 · 🖐️ · 👍 steady'}
+          {handVisible && gesture && !activeChord && 'Gesture not in your chord map'}
           {activeChord && `Playing ${activeChord.label}`}
         </p>
       </div>

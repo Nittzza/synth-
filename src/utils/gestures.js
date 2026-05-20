@@ -1,121 +1,132 @@
 /**
- * ✊ fist → stop all sound
- * 1 / 2 / 🤟 (ILY) / open palm → four chords
- * Returns 'fist' | 1 | 2 | 3 | 'palm' | null
- *
- * Gesture 3 = 🤟 “I love you” (thumb + index + pinky up, middle & ring down).
- * Checked before open palm so 🤟 isn't misread as 🖐️.
+ * Five gestures: ☝️ · ✌️ · 🤟 · 🖐️ · 👍
  */
 
-export const STOP_GESTURE = 'fist'
+import { GESTURE, gestureDisplayName } from './gestureTypes'
 
-export function isStopGesture(gesture) {
-  return gesture === STOP_GESTURE
-}
+export { GESTURE, gestureDisplayName }
+
+const TIP = { thumb: 4, index: 8, middle: 12, ring: 16, pinky: 20 }
+const PIP = { thumb: 3, index: 6, middle: 10, ring: 14, pinky: 18 }
+const MCP = { thumb: 2, index: 5, middle: 9, ring: 13, pinky: 17 }
 
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y)
 }
 
-function isExtended(tip, pip, wrist, landmarks) {
-  const tipLm = landmarks[tip]
-  const pipLm = landmarks[pip]
-  const wristLm = landmarks[wrist]
-  const tipToWrist = dist(tipLm, wristLm)
-  const pipToWrist = dist(pipLm, wristLm)
-  if (tipToWrist > pipToWrist * 1.04) return true
-  return tipLm.y < pipLm.y - 0.012
+function isUp(tip, pip, landmarks) {
+  return landmarks[tip].y < landmarks[pip].y - 0.008
 }
 
-/** Thumb extended outward (🤟 / hang-loose family) */
-function isThumbExtended(landmarks) {
-  const tip = landmarks[4]
-  const ip = landmarks[3]
-  const mcp = landmarks[2]
-  const wrist = landmarks[0]
-  const indexMcp = landmarks[5]
-
-  if (dist(tip, wrist) > dist(ip, wrist) * 1.06) return true
-  if (dist(tip, indexMcp) > dist(mcp, indexMcp) * 1.15) return true
-  return dist(tip, ip) > dist(ip, mcp) * 0.95
+function isDown(tip, pip, landmarks) {
+  return landmarks[tip].y >= landmarks[pip].y - 0.004
 }
 
-/** Middle or ring clearly curled — not extended */
-function isFingerFolded(tip, pip, wrist, landmarks) {
-  return !isExtended(tip, pip, wrist, landmarks)
+function countLongUp(landmarks) {
+  let n = 0
+  if (isUp(TIP.index, PIP.index, landmarks)) n++
+  if (isUp(TIP.middle, PIP.middle, landmarks)) n++
+  if (isUp(TIP.ring, PIP.ring, landmarks)) n++
+  if (isUp(TIP.pinky, PIP.pinky, landmarks)) n++
+  return n
 }
 
-/** 🤟 I love you: thumb + index + pinky extended, middle & ring folded */
-function isLoveYouSign(landmarks) {
-  const index = isExtended(8, 6, 0, landmarks)
-  const middle = isExtended(12, 10, 0, landmarks)
-  const ring = isExtended(16, 14, 0, landmarks)
-  const pinky = isExtended(20, 18, 0, landmarks)
-  const thumb = isThumbExtended(landmarks)
-
-  if (!thumb || !index || !pinky) return false
-  if (middle || ring) return false
-
-  return isFingerFolded(12, 10, 0, landmarks) && isFingerFolded(16, 14, 0, landmarks)
+function isThumbUp(landmarks) {
+  const tip = landmarks[TIP.thumb]
+  const ip = landmarks[PIP.thumb]
+  const mcp = landmarks[MCP.thumb]
+  return tip.y < ip.y - 0.01 && tip.y < mcp.y - 0.005
 }
 
-/** All four fingertips spread wide — stricter than 🤟 */
-function isFullHandSpread(landmarks) {
-  const indexTip = landmarks[8]
-  const pinkyTip = landmarks[20]
-  const indexMcp = landmarks[5]
-  const pinkyMcp = landmarks[17]
-  const tipSpread = dist(indexTip, pinkyTip)
-  const palmWidth = dist(indexMcp, pinkyMcp)
-  return tipSpread > palmWidth * 0.78
+/** 👍 Thumb up, other fingers closed */
+function isThumbsUpPose(landmarks) {
+  if (!isThumbUp(landmarks)) return false
+  if (countLongUp(landmarks) >= 3) return false
+  if (isRockPose(landmarks) || isTwoFingersPose(landmarks)) return false
+  return (
+    isDown(TIP.index, PIP.index, landmarks) &&
+    isDown(TIP.middle, PIP.middle, landmarks) &&
+    isDown(TIP.ring, PIP.ring, landmarks) &&
+    isDown(TIP.pinky, PIP.pinky, landmarks)
+  )
 }
 
-/** ✊ All fingers curled toward the palm */
-function isFist(landmarks) {
-  const index = isExtended(8, 6, 0, landmarks)
-  const middle = isExtended(12, 10, 0, landmarks)
-  const ring = isExtended(16, 14, 0, landmarks)
-  const pinky = isExtended(20, 18, 0, landmarks)
-
-  if (index || middle || ring || pinky) return false
-
-  const palm = landmarks[9]
-  const wrist = landmarks[0]
-  const palmSize = dist(wrist, palm)
-  const tips = [8, 12, 16, 20]
-  const avgTipDist =
-    tips.reduce((sum, i) => sum + dist(landmarks[i], palm), 0) / tips.length
-
-  return avgTipDist < palmSize * 0.92
+export function getFingerStates(landmarks) {
+  if (!landmarks?.length) {
+    return { thumb: false, index: false, middle: false, ring: false, pinky: false }
+  }
+  return {
+    thumb: isThumbUp(landmarks),
+    index: isUp(TIP.index, PIP.index, landmarks),
+    middle: isUp(TIP.middle, PIP.middle, landmarks),
+    ring: isUp(TIP.ring, PIP.ring, landmarks),
+    pinky: isUp(TIP.pinky, PIP.pinky, landmarks),
+  }
 }
 
-/** Open palm: every finger extended and hand clearly wide */
-function isOpenPalm(landmarks) {
-  const index = isExtended(8, 6, 0, landmarks)
-  const middle = isExtended(12, 10, 0, landmarks)
-  const ring = isExtended(16, 14, 0, landmarks)
-  const pinky = isExtended(20, 18, 0, landmarks)
+export function countExtendedFingers(fingers) {
+  return (fingers.index ? 1 : 0) + (fingers.middle ? 1 : 0) + (fingers.ring ? 1 : 0) + (fingers.pinky ? 1 : 0)
+}
 
-  if (!index || !middle || !ring || !pinky) return false
-  return isFullHandSpread(landmarks)
+/** 🖐️ Four fingers up */
+function isOpenPalmPose(landmarks) {
+  return countLongUp(landmarks) >= 4
+}
+
+/** 🤟 Index + pinky, middle & ring folded */
+function isRockPose(landmarks) {
+  return (
+    isUp(TIP.index, PIP.index, landmarks) &&
+    isUp(TIP.pinky, PIP.pinky, landmarks) &&
+    isDown(TIP.middle, PIP.middle, landmarks) &&
+    isDown(TIP.ring, PIP.ring, landmarks)
+  )
+}
+
+/** ✌️ Index + middle */
+function isTwoFingersPose(landmarks) {
+  return (
+    isUp(TIP.index, PIP.index, landmarks) &&
+    isUp(TIP.middle, PIP.middle, landmarks) &&
+    isDown(TIP.ring, PIP.ring, landmarks) &&
+    isDown(TIP.pinky, PIP.pinky, landmarks)
+  )
+}
+
+/** ☝️ Index only */
+function isOneFingerPose(landmarks) {
+  return (
+    isUp(TIP.index, PIP.index, landmarks) &&
+    isDown(TIP.middle, PIP.middle, landmarks) &&
+    isDown(TIP.ring, PIP.ring, landmarks) &&
+    isDown(TIP.pinky, PIP.pinky, landmarks)
+  )
+}
+
+export function classifyGesture(landmarks) {
+  if (!landmarks || landmarks.length < 21) return null
+
+  if (isThumbsUpPose(landmarks)) return GESTURE.THUMBS_UP
+  if (isOpenPalmPose(landmarks)) return GESTURE.OPEN_PALM
+  if (isRockPose(landmarks)) return GESTURE.ROCK
+  if (isTwoFingersPose(landmarks)) return GESTURE.TWO
+  if (isOneFingerPose(landmarks)) return GESTURE.ONE
+
+  return null
+}
+
+export function analyzeHand(landmarks, handednessLabel = 'Unknown') {
+  const fingers = getFingerStates(landmarks)
+  const gesture = classifyGesture(landmarks)
+  return {
+    gesture,
+    gestureName: gestureDisplayName(gesture),
+    fingers,
+    fingerCount: countExtendedFingers(fingers),
+    handedness: handednessLabel || 'Unknown',
+  }
 }
 
 export function detectGesture(landmarks) {
-  if (!landmarks || landmarks.length < 21) return null
-
-  if (isFist(landmarks)) return STOP_GESTURE
-
-  const index = isExtended(8, 6, 0, landmarks)
-  const middle = isExtended(12, 10, 0, landmarks)
-  const ring = isExtended(16, 14, 0, landmarks)
-  const pinky = isExtended(20, 18, 0, landmarks)
-
-  if (index && !middle && !ring && !pinky) return 1
-  if (index && middle && !ring && !pinky) return 2
-
-  if (isLoveYouSign(landmarks)) return 3
-
-  if (isOpenPalm(landmarks)) return 'palm'
-
-  return null
+  return classifyGesture(landmarks)
 }

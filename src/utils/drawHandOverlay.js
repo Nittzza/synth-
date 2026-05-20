@@ -1,9 +1,18 @@
 import { HAND_CONNECTIONS } from './handConnections'
 
 const BOX_COLOR = '#e040fb'
-const LINE_COLOR = 'rgba(255, 255, 255, 0.95)'
-const DOT_COLOR = '#ff4444'
-const DOT_GLOW = 'rgba(255, 80, 80, 0.55)'
+const LINE_COLOR = 'rgba(255, 255, 255, 0.85)'
+
+/** Fingertip colors for debug (thumb → pinky) */
+export const FINGERTIP_COLORS = {
+  thumb: '#ffeb3b',
+  index: '#f44336',
+  middle: '#4caf50',
+  ring: '#2196f3',
+  pinky: '#e91e63',
+}
+
+const TIP_INDEX = { thumb: 4, index: 8, middle: 12, ring: 16, pinky: 20 }
 
 function bounds(landmarks, pad = 0.025) {
   let minX = 1
@@ -25,9 +34,16 @@ function bounds(landmarks, pad = 0.025) {
 }
 
 /**
- * Draw MediaPipe-style hand skeleton on a canvas (normalized landmarks 0–1).
+ * Draw hand skeleton + colored fingertip dots.
+ * fingerStates optional — extended tips get full color, curled get dim gray.
  */
-export function drawHandOverlay(ctx, landmarks, width, height, { active = false } = {}) {
+export function drawHandOverlay(
+  ctx,
+  landmarks,
+  width,
+  height,
+  { active = false, fingerStates = null } = {},
+) {
   if (!landmarks?.length) return
 
   const box = bounds(landmarks)
@@ -60,17 +76,25 @@ export function drawHandOverlay(ctx, landmarks, width, height, { active = false 
     ctx.stroke()
   }
 
-  for (const p of landmarks) {
+  for (const [name, tipIdx] of Object.entries(TIP_INDEX)) {
+    const p = landmarks[tipIdx]
     const x = p.x * width
     const y = p.y * height
-    ctx.fillStyle = DOT_GLOW
+    const extended = fingerStates ? fingerStates[name] : true
+    const color = FINGERTIP_COLORS[name]
+    const radius = extended ? 7 : 4
+    const alpha = extended ? 1 : 0.35
+
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = extended ? color : 'rgba(160,160,160,0.8)'
     ctx.beginPath()
-    ctx.arc(x, y, 7, 0, Math.PI * 2)
+    ctx.arc(x, y, radius + 3, 0, Math.PI * 2)
     ctx.fill()
-    ctx.fillStyle = DOT_COLOR
+    ctx.fillStyle = extended ? color : '#888'
     ctx.beginPath()
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2)
+    ctx.arc(x, y, radius, 0, Math.PI * 2)
     ctx.fill()
+    ctx.globalAlpha = 1
   }
 
   ctx.restore()

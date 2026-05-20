@@ -81,6 +81,10 @@ export function getRippleConfig(activeChord, gesture, voiceLevel = 0) {
     ringCount = 10
     speed = 1.22
     glow = 0.95
+  } else if (gesture === 'thumbs_up') {
+    ringCount = 9
+    speed = 1.14
+    glow = 0.86
   }
 
   const hueShift = ROOT_HUE[activeChord?.root] ?? 0
@@ -92,7 +96,13 @@ export function getRippleConfig(activeChord, gesture, voiceLevel = 0) {
     glow: glow + voiceLevel * 0.35,
     maxRadius: 2.65,
     colors,
-    lineWidth: 2.2 + (gesture === 'palm' ? 1.2 : typeof gesture === 'number' ? gesture * 0.15 : 0),
+    lineWidth:
+      2.2 +
+      (gesture === 'palm' || gesture === 'thumbs_up'
+        ? 1.1
+        : typeof gesture === 'number'
+          ? gesture * 0.12
+          : 0),
   }
 }
 
