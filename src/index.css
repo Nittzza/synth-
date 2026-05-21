@@ -387,36 +387,658 @@ body,
     }
   }
 
-  /* Sound picker — reuses chord-picker-scene backdrop */
-  .sound-picker-scene__grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+  /* Synth Wave chord picker — match inspo mockup */
+  .synth-wave-picker {
+    --sw-pink: #ff69b4;
+    --sw-pink-deep: #e8559f;
+    --sw-mauve: #7a4f6d;
+    --sw-mauve-deep: #6b3f6b;
+    --sw-col-header: #b888a8;
+    --sw-cell-bg: rgba(255, 255, 255, 0.78);
+    --sw-cell-border: #e8b8d0;
+    --sw-panel: rgba(255, 252, 254, 0.68);
+    --sw-card-bg: rgba(255, 228, 240, 0.56);
+    --sw-pixel-shadow: 2px 2px 0 rgba(122, 79, 109, 0.22);
+    --sw-card-border: #f0a8c8;
+
+    position: relative;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    font-smooth: never;
+    background: transparent;
+    color: var(--sw-mauve);
+  }
+
+  /* Full-bleed sunset — anchor left so sun stays visible */
+  .sw-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: #c9a0bc;
+  }
+
+  .sw-scene__bg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 16% 42%;
+  }
+
+  .sw-deco__sparkles {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .sw-deco__sparkle-glyph {
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.48rem;
+    color: #ff69b4;
+    line-height: 1;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6);
+    opacity: 0.92;
+  }
+
+  /* Full-screen translucent overlay (no margin “frame”) */
+  .sw-page-center {
+    position: relative;
+    z-index: 2;
+    display: flex;
     flex: 1;
     min-height: 0;
-    place-items: center;
-    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    box-sizing: border-box;
   }
 
-  .sound-picker-scene__grid .sound-picker-scene__card {
-    width: 84%;
-    height: 84%;
-    min-width: 0;
+  .sw-outer-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    flex: 1;
     min-height: 0;
+    border-radius: 0;
+    border: none;
+    background: var(--sw-card-bg);
+    box-shadow: none;
+    overflow: visible;
   }
 
-  .sound-picker-scene__card {
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+  .sw-outer-card__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: clamp(12px, 2vh, 20px) clamp(14px, 2vw, 24px) clamp(10px, 1.5vh, 16px);
+    overflow: hidden;
+  }
+
+  .sw-content-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding-inline: clamp(1.5rem, 3.5vw, 2.25rem);
+    padding-top: 0;
+    gap: clamp(8px, 1.1vh, 11px);
+    box-sizing: border-box;
+  }
+
+  .sw-deco {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .sw-deco__corner {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .sw-deco__corner--tl {
+    top: 0.15rem;
+    left: 0.15rem;
+    width: 8.25rem;
+    height: 7.25rem;
+  }
+
+  .sw-deco__corner--tr {
+    top: 0.15rem;
+    right: 0.15rem;
+    width: 8.75rem;
+    height: 7.25rem;
+  }
+
+  .sw-deco__corner--bl {
+    bottom: 0.15rem;
+    left: 0.15rem;
+    width: 8.75rem;
+    height: 7.5rem;
+  }
+
+  .sw-deco__corner--br {
+    bottom: 0.15rem;
+    right: 0.15rem;
+    width: 8.75rem;
+    height: 7.5rem;
+  }
+
+  .sw-deco__img {
+    position: absolute;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(2px 3px 5px rgba(107, 63, 107, 0.22));
+  }
+
+  .sw-deco__img--lg {
+    width: clamp(4.35rem, 10vw, 6.1rem);
+    height: clamp(4.35rem, 10vw, 6.1rem);
+  }
+
+  .sw-deco__img--sm {
+    width: clamp(2.45rem, 5.9vw, 3.5rem);
+    height: clamp(2.45rem, 5.9vw, 3.5rem);
+  }
+
+  .synth-wave-picker__header {
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+    padding-top: 0.15rem;
+    padding-right: clamp(5.5rem, 11vw, 7.5rem);
+  }
+
+  .synth-wave-picker__header-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(6px, 1vh, 10px);
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .synth-wave-picker__title-wrap {
+    margin: 0 0 0 clamp(1.25rem, 3vw, 2.25rem);
+    line-height: 0;
+    background: transparent;
+  }
+
+  .synth-wave-picker__title-img {
+    display: block;
+    width: clamp(15rem, 32vw, 23rem);
+    height: auto;
+    margin: 0;
+    background: transparent;
+    border: none;
+    object-fit: contain;
+    object-position: left center;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(0 2px 6px rgba(232, 85, 159, 0.22));
+  }
+
+  .synth-wave-picker .selected-badge {
+    position: absolute;
+    top: 0.4rem;
+    right: clamp(2.25rem, 5vw, 3.5rem);
+    left: auto;
+    z-index: 2;
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 2px solid #ff69b4;
+    background: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.48rem, 1.2vw, 0.65rem);
+    line-height: 1.55;
+    color: var(--sw-mauve);
+    white-space: nowrap;
+    box-shadow: var(--sw-pixel-shadow);
+  }
+
+  .synth-wave-picker__dropdowns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .synth-wave-picker__dropdown {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 2px solid #ff69b4;
+    background: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.45rem, 1vw, 0.58rem);
+    line-height: 1.45;
+    color: var(--sw-mauve);
+    text-align: left;
+    white-space: nowrap;
+    cursor: default;
+    box-shadow: var(--sw-pixel-shadow);
+    overflow: hidden;
+  }
+
+  .synth-wave-picker__caret {
+    color: #ff69b4;
+    margin-left: 4px;
+  }
+
+  .synth-wave-picker__matrix-section {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .synth-wave-picker__matrix-panel {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    padding: clamp(16px, 2vh, 22px);
+    border-radius: 18px;
+    border: 2px solid rgba(240, 168, 200, 0.75);
+    background: var(--sw-panel);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  }
+
+  .synth-wave-picker .chord-grid {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(4rem, 76px) repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto repeat(7, minmax(3.35rem, 1fr));
+    gap: clamp(5px, 0.6vh, 7px);
+    align-content: stretch;
+    width: 100%;
+  }
+
+  .chord-grid__corner {
+    min-height: 1.25rem;
+  }
+
+  .synth-wave-picker .col-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.45rem, 1vw, 0.56rem);
+    line-height: 1.4;
+    color: var(--sw-col-header);
+    text-align: center;
+  }
+
+  .synth-wave-picker .row-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.45rem, 1vw, 0.56rem);
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--sw-mauve);
+    background: transparent;
+  }
+
+  .synth-wave-picker .chord-cell {
+    position: relative;
+    display: flex;
+    min-height: 52px;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 2px;
+    border-radius: 11px;
+    border: 1px solid rgba(232, 176, 208, 0.9);
+    background:
+      radial-gradient(ellipse 90% 55% at 50% 8%, rgba(255, 255, 255, 0.98) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 35% at 82% 88%, rgba(255, 182, 220, 0.45) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 30% at 12% 75%, rgba(255, 210, 235, 0.35) 0%, transparent 50%),
+      linear-gradient(165deg, #ffffff 0%, #fff8fc 42%, #ffeef6 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -3px 6px rgba(232, 150, 190, 0.18),
+      0 2px 5px rgba(122, 79, 109, 0.12);
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.42rem, 0.95vw, 0.54rem);
+    line-height: 1.35;
+    color: var(--sw-mauve);
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    image-rendering: pixelated;
+    overflow: hidden;
+    transition:
+      border-color 0.12s step-end,
+      box-shadow 0.12s step-end,
+      transform 0.12s step-end;
+  }
+
+  .synth-wave-picker .chord-cell::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 12%;
+    right: 12%;
+    height: 38%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.75) 0%, transparent 72%);
+    pointer-events: none;
+  }
+
+  .synth-wave-picker .chord-cell:hover:not(.selected):not(:disabled) {
+    border-color: #f9a8d4;
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 1),
+      inset 0 -3px 6px rgba(232, 150, 190, 0.22),
+      0 3px 8px rgba(255, 105, 180, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .synth-wave-picker .chord-cell.selected {
+    color: #fff;
+    border: 2px solid var(--sw-pink-deep);
+    background:
+      radial-gradient(ellipse 85% 50% at 50% 6%, rgba(255, 255, 255, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse 45% 35% at 78% 90%, rgba(255, 150, 200, 0.4) 0%, transparent 50%),
+      linear-gradient(165deg, #ff8fc8 0%, #ff69b4 38%, #f04d9f 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -3px 6px rgba(180, 40, 100, 0.35),
+      2px 3px 0 rgba(232, 85, 159, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .synth-wave-picker .chord-cell.selected::before {
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  }
+
+  .synth-wave-picker .chord-cell.selected::after {
+    content: '✓';
+    position: absolute;
+    z-index: 1;
+    top: 3px;
+    right: 5px;
+    font-size: clamp(0.32rem, 0.75vw, 0.48rem);
+    color: #fff;
+    line-height: 1;
+  }
+
+  .synth-wave-picker .chord-cell--disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  .synth-wave-picker__footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 2px;
+  }
+
+  .synth-wave-picker .assign-btn {
+    width: min(100%, 26rem);
+    padding: 14px 40px;
+    border-radius: 999px;
+    border: 2px solid #ff69b4;
+    background: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.5rem, 1.1vw, 0.7rem);
+    line-height: 1.55;
+    letter-spacing: 0.5px;
+    text-transform: lowercase;
+    color: var(--sw-mauve);
+    cursor: pointer;
+    box-shadow: var(--sw-pixel-shadow);
+    transition: background 0.1s step-end, transform 0.1s step-end;
+  }
+
+  .synth-wave-picker .assign-btn::after {
+    content: ' →';
+  }
+
+  .synth-wave-picker .assign-btn:hover:not(:disabled) {
+    background: #ffd6eb;
+    transform: translateY(-2px);
+  }
+
+  .synth-wave-picker .assign-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(122, 79, 109, 0.35);
+  }
+
+  .synth-wave-picker .assign-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  /* Sound picker — same shell as chord picker */
+  .sound-picker .sw-content-column {
+    gap: clamp(16px, 2.5vh, 24px);
+  }
+
+  .sound-picker__header {
+    flex-shrink: 0;
+    padding: clamp(0.5rem, 1.2vh, 0.85rem) 0 clamp(0.75rem, 1.5vh, 1.25rem);
+    margin-left: calc(clamp(1.25rem, 3vw, 2.25rem) + 1cm);
+    margin-right: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .sound-picker__title {
+    margin: 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.62rem, 1.5vw, 0.82rem);
+    line-height: 1.65;
+    color: #5a2d4a;
+    text-transform: lowercase;
     text-shadow:
-      0 0 8px rgba(255, 255, 255, 0.85),
-      0 1px 2px rgba(255, 255, 255, 0.75);
+      0 0 14px rgba(255, 255, 255, 0.95),
+      0 1px 0 rgba(255, 255, 255, 1),
+      0 2px 6px rgba(255, 210, 235, 0.75);
   }
 
-  .sound-picker-scene__card--selected {
-    border-color: rgba(255, 255, 255, 0.65);
-    box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
+  .sound-picker__subtitle {
+    margin: clamp(10px, 1.4vh, 14px) 0 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.42rem, 0.95vw, 0.54rem);
+    line-height: 1.55;
+    color: #7a4568;
+    text-transform: lowercase;
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.85),
+      0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 4px rgba(255, 200, 230, 0.55);
+  }
+
+  .sound-picker__panel {
+    display: flex;
+    flex: 1 1 auto;
+    align-self: center;
+    width: min(96%, 54rem);
+    max-height: min(72vh, 34rem);
+    min-height: min(42vh, 22rem);
+    flex-direction: column;
+    padding: clamp(16px, 2vh, 22px);
+    border-radius: 18px;
+    border: 2px solid rgba(240, 168, 200, 0.75);
+    background: var(--sw-panel);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  }
+
+  .sound-picker__grid {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    max-height: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(4.5rem, 1fr));
+    gap: clamp(8px, 1vh, 12px);
+    width: 100%;
+  }
+
+  .sound-picker__card {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 6px;
+    border-radius: 11px;
+    border: 1px solid rgba(232, 176, 208, 0.9);
+    background:
+      radial-gradient(ellipse 90% 55% at 50% 8%, rgba(255, 255, 255, 0.98) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 35% at 82% 88%, rgba(255, 182, 220, 0.45) 0%, transparent 55%),
+      linear-gradient(165deg, #ffffff 0%, #fff8fc 42%, #ffeef6 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -3px 6px rgba(232, 150, 190, 0.18),
+      0 2px 5px rgba(122, 79, 109, 0.12);
+    font-family: 'Press Start 2P', monospace;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      border-color 0.12s step-end,
+      box-shadow 0.12s step-end,
+      transform 0.12s step-end;
+  }
+
+  .sound-picker__card::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 12%;
+    right: 12%;
+    height: 38%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.75) 0%, transparent 72%);
+    pointer-events: none;
+  }
+
+  .sound-picker__card-label {
+    position: relative;
+    z-index: 1;
+    font-size: clamp(0.42rem, 0.95vw, 0.56rem);
+    line-height: 1.35;
+    color: var(--sw-mauve);
+    text-align: center;
+  }
+
+  .sound-picker__card-hint {
+    position: relative;
+    z-index: 1;
+    font-size: clamp(0.32rem, 0.7vw, 0.42rem);
+    color: var(--sw-mauve-deep);
+    line-height: 1;
+  }
+
+  .sound-picker__card:hover:not(.sound-picker__card--selected) {
+    border-color: #f9a8d4;
+    transform: translateY(-1px);
+  }
+
+  .sound-picker__card--selected {
+    border: 2px solid var(--sw-pink-deep);
+    background:
+      radial-gradient(ellipse 85% 50% at 50% 6%, rgba(255, 255, 255, 0.55) 0%, transparent 55%),
+      linear-gradient(165deg, #ff8fc8 0%, #ff69b4 38%, #f04d9f 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -3px 6px rgba(180, 40, 100, 0.35),
+      2px 3px 0 rgba(232, 85, 159, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .sound-picker__card--selected .sound-picker__card-label,
+  .sound-picker__card--selected .sound-picker__card-hint {
+    color: #fff;
+  }
+
+  .sound-picker__card--selected::before {
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  }
+
+  .sound-picker__footer {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: clamp(10px, 1.5vh, 16px) 0 2px;
+    margin-top: auto;
+  }
+
+  .sound-picker__btn {
+    padding: 12px 20px;
+    border-radius: 999px;
+    border: 2px solid #ff69b4;
+    background: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.45rem, 1vw, 0.58rem);
+    line-height: 1.55;
+    text-transform: lowercase;
+    color: var(--sw-mauve);
+    cursor: pointer;
+    box-shadow: var(--sw-pixel-shadow);
+    transition: background 0.1s step-end, transform 0.1s step-end;
+  }
+
+  .sound-picker__btn--back {
+    flex: 1;
+    max-width: 10rem;
+  }
+
+  .sound-picker__btn--continue {
+    flex: 2;
+    max-width: 20rem;
+  }
+
+  .sound-picker__btn--continue::after {
+    content: ' →';
+  }
+
+  .sound-picker__btn:hover {
+    background: #ffd6eb;
+    transform: translateY(-2px);
+  }
+
+  .sound-picker__btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(122, 79, 109, 0.35);
   }
 
 }
