@@ -11,8 +11,8 @@ import ChordPicker from './components/ChordPicker'
 import SoundPicker from './components/SoundPicker'
 import GestureAssignment from './components/GestureAssignment'
 import { buildGestureMap, getChordFromGesture } from './utils/chords'
-import { useSmoothValue } from './hooks/useSmoothValue'
-import { useVoiceLevel } from './hooks/useVoiceLevel'
+/** Steady perform volume — mic is not required for chords to play (see useVoiceLevel). */
+const PERFORM_INTENSITY = 0.35
 
 /** pick → sound → assign → perform */
 export default function App() {
@@ -35,9 +35,6 @@ export default function App() {
     if (!handVisible || !gesture) return null
     return getChordFromGesture(gestureMap, gesture)
   }, [gestureMap, gesture, handVisible])
-
-  const voiceRaw = useVoiceLevel(performing && !!activeChord)
-  const voiceLevel = useSmoothValue(voiceRaw, 0.05)
 
   const handleVideoReady = useCallback((el) => {
     setVideo(el)
@@ -108,7 +105,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#050508]">
+    <div className="perform-phase relative h-full w-full overflow-hidden bg-[#050508]">
       <CameraFeed onReady={handleVideoReady} />
 
       {video && (
@@ -132,7 +129,7 @@ export default function App() {
               activeChord={activeChord}
               handVisible={handVisible}
               stopAll={false}
-              intensity={voiceLevel}
+              intensity={PERFORM_INTENSITY}
             />
           )}
         </>
@@ -161,17 +158,10 @@ export default function App() {
         gestureMap={gestureMap}
       />
 
-      <div className="pointer-events-none absolute bottom-8 left-0 right-0 z-20 text-center">
-        <p
-          className="text-5xl font-light italic tracking-[0.15em] text-white/60"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          {activeChord?.label ?? '—'}
-        </p>
-        <p className="mt-1 text-[10px] uppercase tracking-widest text-white/30">
-          {getActivePresetLabel()}
-        </p>
-        <p className="mt-3 text-sm text-white/45">
+      <div className="perform-phase__hud pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-6 text-center">
+        <p className="perform-phase__chord-label">{activeChord?.label ?? '—'}</p>
+        <p className="perform-phase__preset">{getActivePresetLabel()}</p>
+        <p className="perform-phase__hint">
           {!handVisible && 'Raise your hand in front of the camera'}
           {handVisible && !gesture && 'Hold ☝️ · ✌️ · 🤟 · 🖐️ · 👍 steady'}
           {handVisible && gesture && !activeChord && 'Gesture not in your chord map'}
@@ -182,7 +172,7 @@ export default function App() {
       <button
         type="button"
         onClick={() => setPhase('pick')}
-        className="absolute right-4 top-4 z-30 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[10px] tracking-widest text-white/40 uppercase backdrop-blur-sm hover:text-white/70"
+        className="perform-phase__exit absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-30 min-h-[44px] rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[10px] tracking-widest text-white/40 uppercase backdrop-blur-sm hover:text-white/70"
       >
         Change chords
       </button>

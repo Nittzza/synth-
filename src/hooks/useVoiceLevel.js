@@ -3,8 +3,9 @@ import * as Tone from 'tone'
 import { isAudioStarted, startAudio } from '../utils/audioBoot'
 
 /**
- * Microphone RMS mapped to [0, 1] for bloom / particle intensity.
- * Only opens the mic after audio has been unlocked by a user gesture.
+ * Optional: microphone RMS → [0, 1] for louder/softer chords while performing.
+ * Chords do NOT need the mic — preview and gesture playback use the synth only.
+ * Not wired in App by default (avoids a mic permission prompt).
  */
 export function useVoiceLevel(enabled = true) {
   const [level, setLevel] = useState(0)

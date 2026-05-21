@@ -10,14 +10,6 @@ import { useChordPreview } from '../hooks/useChordPreview'
 import { ChordPickerScene } from './ChordPickerScene'
 import { BackgroundSparkles, CornerDecorations } from './ChordPickerDecor'
 
-const DEFAULT_SELECTION = [
-  ['C', 'major'],
-  ['E', 'major'],
-  ['G', 'major'],
-  ['A', 'minor'],
-  ['B', 'm7'],
-]
-
 const TITLE_SRC = '/images/title-synth-wave.png?v=6'
 
 function formatRootHeader(root) {
@@ -28,9 +20,7 @@ function formatRootHeader(root) {
  * Synth Wave chord picker — reference mockup layout.
  */
 export default function ChordPicker({ onContinue }) {
-  const [selected, setSelected] = useState(() =>
-    DEFAULT_SELECTION.map(([root, quality]) => createChord(root, quality))
-  )
+  const [selected, setSelected] = useState([])
   const { preview, stop } = useChordPreview()
 
   const selectedIds = useMemo(() => new Set(selected.map((c) => c.id)), [selected])
@@ -86,6 +76,9 @@ export default function ChordPicker({ onContinue }) {
             </header>
 
             <section className="synth-wave-picker__matrix-section">
+              <p className="synth-wave-picker__scroll-hint" aria-hidden>
+                swipe notes →
+              </p>
               <div className="synth-wave-picker__matrix-panel">
                 <div className="chord-grid">
                   <div className="chord-grid__corner" />
